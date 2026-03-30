@@ -80,7 +80,7 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
 
   return (
     <div
-      className={cn("group flex flex-col", isOwn ? "items-end" : "items-start")}
+      className={cn("group flex w-full flex-col", isOwn ? "items-end" : "items-start")}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -93,30 +93,9 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
         </span>
       )}
 
-      <div className="relative flex items-center gap-1.5">
-        {/* Desktop reply button — appears on hover, left of other-people's msgs */}
-        {!isOwn && (
-          <motion.button
-            animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.7 }}
-            transition={{ duration: 0.15 }}
-            onClick={triggerReply}
-            className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Reply"
-          >
-            <Reply className="h-3.5 w-3.5" />
-          </motion.button>
-        )}
-
-        {/* Swipe-to-reply indicator (own messages swipe left, others right) */}
-        {!isOwn && (
-          <motion.span
-            style={{ opacity: iconOpacity, x: iconX }}
-            className="pointer-events-none absolute -left-8 flex items-center text-muted-foreground"
-          >
-            <Reply className="h-4 w-4" />
-          </motion.span>
-        )}
-
+      {/* Bubble + absolutely-positioned reply button so it never affects bubble width */}
+      <div className="relative max-w-[75%]">
+        {/* Swipe-to-reply drag layer */}
         <motion.div
           style={{ x }}
           drag={!isOwn ? "x" : false}
@@ -126,23 +105,33 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
           onDragEnd={handleDragEnd}
           className="touch-pan-y"
         >
+          {/* Swipe indicator */}
+          {!isOwn && (
+            <motion.span
+              style={{ opacity: iconOpacity, x: iconX }}
+              className="pointer-events-none absolute -left-7 top-1/2 -translate-y-1/2 text-muted-foreground"
+            >
+              <Reply className="h-3.5 w-3.5" />
+            </motion.span>
+          )}
+
           <div
             style={{ overflowWrap: "anywhere" }}
             className={cn(
-              "max-w-[75%] w-fit rounded-2xl px-3.5 py-2 text-sm",
+              "rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
               isOwn
                 ? "rounded-br-sm bg-primary text-primary-foreground"
                 : "rounded-bl-sm bg-muted text-foreground"
             )}
           >
-            {/* Reply quote */}
+            {/* Reply quote — darker tint */}
             {msg.replyToContent && (
               <div
                 className={cn(
-                  "mb-1.5 rounded-lg px-2.5 py-1.5 text-xs leading-snug",
+                  "mb-2 rounded-lg border-l-2 pl-2.5 pr-2 py-1.5 text-xs leading-snug",
                   isOwn
-                    ? "bg-white/20 text-primary-foreground/80"
-                    : "bg-black/5 dark:bg-white/10 text-muted-foreground"
+                    ? "border-white/40 bg-black/25 text-primary-foreground/75"
+                    : "border-primary/40 bg-primary/10 text-foreground/70"
                 )}
               >
                 <p className="mb-0.5 font-semibold">{msg.replyToAuthor}</p>
@@ -153,18 +142,19 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
           </div>
         </motion.div>
 
-        {/* Desktop reply button — right side for own messages */}
-        {isOwn && (
-          <motion.button
-            animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.7 }}
-            transition={{ duration: 0.15 }}
-            onClick={triggerReply}
-            className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Reply"
-          >
-            <Reply className="h-3.5 w-3.5" />
-          </motion.button>
-        )}
+        {/* Desktop reply button — floats outside bubble, doesn't affect width */}
+        <motion.button
+          animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.7 }}
+          transition={{ duration: 0.15 }}
+          onClick={triggerReply}
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground",
+            isOwn ? "-left-7" : "-right-7"
+          )}
+          aria-label="Reply"
+        >
+          <Reply className="h-3.5 w-3.5" />
+        </motion.button>
       </div>
 
       <span className="font-subtext mt-0.5 px-1 text-[11px] text-muted-foreground">
