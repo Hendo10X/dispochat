@@ -15,6 +15,9 @@ export default defineSchema({
     content: v.string(),
     authorName: v.string(),
     authorId: v.string(),
+    replyToId: v.optional(v.id("messages")),
+    replyToContent: v.optional(v.string()),
+    replyToAuthor: v.optional(v.string()),
   }).index("by_room", ["roomId"]),
 
   presence: defineTable({

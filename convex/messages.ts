@@ -7,6 +7,9 @@ export const sendMessage = mutation({
     content: v.string(),
     authorName: v.string(),
     authorId: v.string(),
+    replyToId: v.optional(v.id("messages")),
+    replyToContent: v.optional(v.string()),
+    replyToAuthor: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
@@ -22,6 +25,9 @@ export const sendMessage = mutation({
       content: trimmed,
       authorName: args.authorName,
       authorId: args.authorId,
+      replyToId: args.replyToId,
+      replyToContent: args.replyToContent,
+      replyToAuthor: args.replyToAuthor,
     });
   },
 });

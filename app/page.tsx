@@ -19,9 +19,9 @@ const DispoIcon = ({ size = 18 }: { size?: number }) => (
 
 /* ─── Chat preview ─────────────────────────────────────────────── */
 const avatars = [
-  { initials: "AK", bg: "bg-blue-200 text-blue-800" },
-  { initials: "JR", bg: "bg-emerald-200 text-emerald-800" },
-  { initials: "MS", bg: "bg-violet-200 text-violet-800" },
+  { initials: "AK", bg: "bg-amber-100 text-amber-800" },
+  { initials: "JR", bg: "bg-orange-100 text-orange-800" },
+  { initials: "MS", bg: "bg-rose-100 text-rose-800" },
 ];
 
 function ChatPreview() {

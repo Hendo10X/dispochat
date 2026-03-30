@@ -9,7 +9,7 @@ import { useUserId } from "@/hooks/use-user-id"
 import { useRoomExpiry } from "@/hooks/use-room-expiry"
 import { JoinDialog } from "./join-dialog"
 import { RoomTimer } from "./room-timer"
-import { ChatMessages } from "./chat-messages"
+import { ChatMessages, type ReplyTarget } from "./chat-messages"
 import { MessageInput } from "./message-input"
 import { ParticipantList } from "./participant-list"
 import { Button } from "@/components/ui/button"
@@ -51,6 +51,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
 
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null)
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const { isExpired } = useRoomExpiry(room?.expiresAt)
@@ -217,12 +218,19 @@ export function RoomShell({ roomId }: RoomShellProps) {
           <div className="flex flex-1 flex-col overflow-hidden">
             {displayName && userId ? (
               <>
-                <ChatMessages roomId={roomId} currentUserId={userId} typingUsers={typingUsers} />
+                <ChatMessages
+                  roomId={roomId}
+                  currentUserId={userId}
+                  typingUsers={typingUsers}
+                  onReply={setReplyTarget}
+                />
                 <MessageInput
                   roomId={roomId}
                   authorName={displayName}
                   authorId={userId}
                   disabled={isExpired}
+                  replyTarget={replyTarget}
+                  onCancelReply={() => setReplyTarget(null)}
                 />
               </>
             ) : (

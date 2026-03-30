@@ -6,14 +6,17 @@ import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ArrowUp, Smile } from "lucide-react"
+import { ArrowUp, Smile, X, CornerUpLeft } from "lucide-react"
 import { EmojiPicker } from "frimousse"
+import type { ReplyTarget } from "./chat-messages"
 
 interface MessageInputProps {
   roomId: Id<"rooms">
   authorName: string
   authorId: string
   disabled?: boolean
+  replyTarget?: ReplyTarget | null
+  onCancelReply?: () => void
 }
 
 const MAX_CHARS = 500
@@ -23,6 +26,8 @@ export function MessageInput({
   authorName,
   authorId,
   disabled,
+  replyTarget,
+  onCancelReply,
 }: MessageInputProps) {
   const sendMessage = useMutation(api.messages.sendMessage)
   const setTyping = useMutation(api.presence.setTyping)
@@ -102,9 +107,18 @@ export function MessageInput({
     if (!canSend) return
     setIsSending(true)
     try {
-      await sendMessage({ roomId, content: trimmed, authorName, authorId })
+      await sendMessage({
+        roomId,
+        content: trimmed,
+        authorName,
+        authorId,
+        replyToId: replyTarget?.id,
+        replyToContent: replyTarget?.content,
+        replyToAuthor: replyTarget?.authorName,
+      })
       setContent("")
       setTypingStatus(false)
+      onCancelReply?.()
       if (textareaRef.current) textareaRef.current.style.height = "auto"
     } finally {
       setIsSending(false)
@@ -124,7 +138,27 @@ export function MessageInput({
   }
 
   return (
-    <div className="relative border-t bg-background p-3">
+    <div className="relative border-t bg-background">
+      {/* ── Reply preview bar ── */}
+      {replyTarget && (
+        <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2">
+          <CornerUpLeft className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-primary">{replyTarget.authorName}</p>
+            <p className="truncate font-subtext text-xs text-muted-foreground">{replyTarget.content}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancelReply}
+            className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+            aria-label="Cancel reply"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      <div className="p-3">
       {/* ── Emoji picker popover ── */}
       {pickerOpen && (
         <div ref={pickerRef} className="absolute right-3 bottom-full z-50 mb-2">
@@ -197,6 +231,7 @@ export function MessageInput({
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
         </div>
+      </div>
       </div>
     </div>
   )
