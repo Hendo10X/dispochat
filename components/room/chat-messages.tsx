@@ -108,18 +108,16 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
       {msg.replyToContent && (
         <div className={cn("flex flex-col mb-0.5", isOwn ? "items-end" : "items-start")}>
           <div
-            className={cn(
-              "w-px h-4",
-              isOwn ? "mr-3" : "ml-3"
-            )}
-            style={{ background: "#00C950", opacity: 0.45 }}
+            className={cn("w-px h-4", isOwn ? "mr-3" : "ml-3")}
+            style={{ background: "currentColor", opacity: 0.3 }}
           />
-          <span
-            className="flex items-center gap-1 text-[11px] font-medium font-subtext px-1"
-            style={{ color: "#00C950" }}
-          >
+          <span className="flex items-center gap-1 text-[11px] font-subtext px-1 text-muted-foreground">
             <CornerUpLeft className="h-3 w-3 shrink-0" />
-            replied to <span className="font-semibold">{msg.replyToAuthor}</span>
+            replied to{" "}
+            <span className="font-semibold">{msg.replyToAuthor}</span>
+            <span className="italic truncate max-w-[140px]">
+              &ldquo;{msg.replyToContent}&rdquo;
+            </span>
           </span>
         </div>
       )}
