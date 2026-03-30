@@ -29,6 +29,13 @@ export const upsertPresence = mutation({
         lastSeen: Date.now(),
         typing: false,
       })
+      await ctx.db.insert("messages", {
+        roomId: args.roomId,
+        type: "join",
+        content: "",
+        authorName: args.displayName,
+        authorId: args.userId,
+      })
     }
   },
 })

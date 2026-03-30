@@ -59,6 +59,7 @@ function formatTime(timestamp: number): string {
 interface BubbleProps {
   msg: {
     _id: Id<"messages">;
+    type?: "message" | "join";
     content: string;
     authorName: string;
     authorId: string;
@@ -115,7 +116,7 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
             <CornerUpLeft className="h-3 w-3 shrink-0" />
             replied to{" "}
             <span className="font-semibold">{msg.replyToAuthor}</span>
-            <span className="italic truncate max-w-[140px]">
+            <span className="italic truncate max-w-35">
               &ldquo;{msg.replyToContent}&rdquo;
             </span>
           </span>
@@ -238,9 +239,25 @@ export function ChatMessages({
         className="flex flex-1 flex-col gap-1 overflow-y-auto p-4"
       >
         {messages.map((msg, i) => {
+          if (msg.type === "join") {
+            return (
+              <div
+                key={msg._id}
+                className="md:hidden flex items-center justify-center py-1"
+              >
+                <span
+                  className="font-subtext text-[10px] font-semibold uppercase tracking-widest"
+                  style={{ color: colorForId(msg.authorId) }}
+                >
+                  {msg.authorName} joined the chat
+                </span>
+              </div>
+            );
+          }
+
           const isOwn = msg.authorId === currentUserId;
           const prevMsg = messages[i - 1];
-          const showName = !isOwn && prevMsg?.authorId !== msg.authorId;
+          const showName = !isOwn && prevMsg?.authorId !== msg.authorId && prevMsg?.type !== "join";
 
           return (
             <MessageBubble

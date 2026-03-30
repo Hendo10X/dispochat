@@ -12,6 +12,7 @@ export default defineSchema({
 
   messages: defineTable({
     roomId: v.id("rooms"),
+    type: v.optional(v.union(v.literal("message"), v.literal("join"))),
     content: v.string(),
     authorName: v.string(),
     authorId: v.string(),
