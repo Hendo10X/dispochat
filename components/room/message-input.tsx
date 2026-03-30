@@ -25,11 +25,14 @@ export function MessageInput({
   disabled,
 }: MessageInputProps) {
   const sendMessage = useMutation(api.messages.sendMessage)
+  const setTyping = useMutation(api.presence.setTyping)
   const [content, setContent] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const trimmed = content.trim()
   const canSend =
@@ -47,14 +50,36 @@ export function MessageInput({
     document.addEventListener("mousedown", onDown)
     return () => document.removeEventListener("mousedown", onDown)
   }, [pickerOpen])
-
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      setTypingStatus(false)
+    }
+  }, [])
   function autoResize() {
     const el = textareaRef.current
     if (!el) return
     el.style.height = "auto"
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`
   }
+  async function setTypingStatus(active: boolean) {
+    if (isTyping === active) return
+    setIsTyping(active)
+    try {
+      await setTyping({ roomId, userId: authorId, typing: active })
+    } catch {
+      // ignore transient errors
+    }
+  }
 
+  function scheduleStopTyping() {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    typingTimeoutRef.current = setTimeout(() => setTypingStatus(false), 1200)
+  }
   function insertEmoji(emoji: string) {
     const el = textareaRef.current
     if (!el) {
@@ -79,6 +104,7 @@ export function MessageInput({
     try {
       await sendMessage({ roomId, content: trimmed, authorName, authorId })
       setContent("")
+      setTypingStatus(false)
       if (textareaRef.current) textareaRef.current.style.height = "auto"
     } finally {
       setIsSending(false)
@@ -90,7 +116,11 @@ export function MessageInput({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+      return
     }
+
+    setTypingStatus(true)
+    scheduleStopTyping()
   }
 
   return (

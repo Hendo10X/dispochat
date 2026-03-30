@@ -7,11 +7,16 @@ function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
+  const [storageKey] = React.useState(
+    () => `dispochat-theme-${Math.random().toString(36).slice(2, 10)}`
+  )
+
   return (
     <NextThemesProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
+      storageKey={storageKey}
       disableTransitionOnChange
       {...props}
     >
@@ -47,7 +52,7 @@ function ThemeHotkey() {
         return
       }
 
-      if (event.key.toLowerCase() !== "d") {
+      if (!event.key || event.key.toLowerCase() !== "d") {
         return
       }
 

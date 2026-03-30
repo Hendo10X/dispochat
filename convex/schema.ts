@@ -1,5 +1,5 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from "convex/server"
+import { v } from "convex/values"
 
 export default defineSchema({
   rooms: defineTable({
@@ -22,7 +22,8 @@ export default defineSchema({
     userId: v.string(),
     displayName: v.string(),
     lastSeen: v.number(),
+    typing: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_user", ["roomId", "userId"]),
-});
+})

@@ -1,5 +1,5 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { v } from "convex/values"
+import { mutation, query } from "./_generated/server"
 
 export const upsertPresence = mutation({
   args: {
@@ -13,23 +13,48 @@ export const upsertPresence = mutation({
       .withIndex("by_room_user", (q) =>
         q.eq("roomId", args.roomId).eq("userId", args.userId)
       )
-      .unique();
+      .unique()
 
     if (existing) {
       await ctx.db.patch(existing._id, {
         lastSeen: Date.now(),
         displayName: args.displayName,
-      });
+        typing: false,
+      })
     } else {
       await ctx.db.insert("presence", {
         roomId: args.roomId,
         userId: args.userId,
         displayName: args.displayName,
         lastSeen: Date.now(),
-      });
+        typing: false,
+      })
     }
   },
-});
+})
+
+export const setTyping = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    userId: v.string(),
+    typing: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("presence")
+      .withIndex("by_room_user", (q) =>
+        q.eq("roomId", args.roomId).eq("userId", args.userId)
+      )
+      .unique()
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        typing: args.typing,
+        lastSeen: Date.now(),
+      })
+    }
+  },
+})
 
 export const removePresence = mutation({
   args: {
@@ -42,13 +67,13 @@ export const removePresence = mutation({
       .withIndex("by_room_user", (q) =>
         q.eq("roomId", args.roomId).eq("userId", args.userId)
       )
-      .unique();
+      .unique()
 
     if (existing) {
-      await ctx.db.delete(existing._id);
+      await ctx.db.delete(existing._id)
     }
   },
-});
+})
 
 export const getPresence = query({
   args: { roomId: v.id("rooms") },
@@ -56,6 +81,6 @@ export const getPresence = query({
     return await ctx.db
       .query("presence")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-      .collect();
+      .collect()
   },
-});
+})

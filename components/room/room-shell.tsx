@@ -23,6 +23,24 @@ interface RoomShellProps {
 const STALE_THRESHOLD = 15_000
 const HEARTBEAT_INTERVAL = 10_000
 
+const TYPING_COLORS = [
+  "text-violet-500",
+  "text-blue-500",
+  "text-emerald-500",
+  "text-amber-500",
+  "text-rose-500",
+  "text-cyan-500",
+  "text-fuchsia-500",
+]
+
+function typingColorForUserId(userId: string): string {
+  let hash = 0
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash * 31 + userId.charCodeAt(i)) >>> 0
+  }
+  return TYPING_COLORS[hash % TYPING_COLORS.length]
+}
+
 export function RoomShell({ roomId }: RoomShellProps) {
   const router = useRouter()
   const userId = useUserId()
@@ -129,6 +147,9 @@ export function RoomShell({ roomId }: RoomShellProps) {
   const activeParticipants = (presenceRecords ?? []).filter(
     (p) => p.lastSeen > Date.now() - STALE_THRESHOLD
   )
+  const typingUsers = activeParticipants.filter(
+    (p) => p.typing && p.userId !== userId
+  )
   const isUserPresent = activeParticipants.some((p) => p.userId === userId)
   const isFull =
     activeParticipants.length >= room.maxPeople &&
@@ -189,6 +210,33 @@ export function RoomShell({ roomId }: RoomShellProps) {
             Press <Kbd>d</Kbd> to toggle between dark and light mode.
           </p>
         </div>
+
+        {typingUsers.length > 0 && (
+          <div className="px-4 pb-2 text-sm">
+            {typingUsers.length === 1 ? (
+              <span
+                className={`inline-flex animate-pulse items-center gap-2 ${typingColorForUserId(
+                  typingUsers[0].userId
+                )}`}
+              >
+                {typingUsers[0].displayName} is typing...
+              </span>
+            ) : (
+              <span className="inline-flex animate-pulse items-center gap-2">
+                {typingUsers.map((u, index) => (
+                  <span
+                    key={u.userId}
+                    className={`${typingColorForUserId(u.userId)} font-semibold`}
+                  >
+                    {u.displayName}
+                    {index < typingUsers.length - 1 ? ", " : ""}
+                  </span>
+                ))}
+                are typing...
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden">
