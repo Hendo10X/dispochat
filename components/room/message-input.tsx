@@ -6,8 +6,7 @@ import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ArrowUp, Smile, X, CornerUpLeft } from "lucide-react"
-import { EmojiPicker } from "frimousse"
+import { ArrowUp, X, CornerUpLeft } from "lucide-react"
 import { useWebHaptics } from "web-haptics/react"
 import type { ReplyTarget } from "./chat-messages"
 
@@ -22,6 +21,31 @@ interface MessageInputProps {
 
 const MAX_CHARS = 500
 
+/* ─── Slash commands ─────────────────────────────────────────── */
+type CommandType = "variant" | "color"
+type Variant = "shout" | "whisper" | "bold"
+
+interface SlashCommand {
+  cmd: string
+  desc: string
+  type: CommandType
+  value: string
+  color?: string
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  { cmd: "/shout",   desc: "All caps, every message",    type: "variant", value: "shout"   },
+  { cmd: "/whisper", desc: "Soft and italic",            type: "variant", value: "whisper" },
+  { cmd: "/bold",    desc: "Make your words pop",        type: "variant", value: "bold"    },
+  { cmd: "/red",     desc: "Red bubble",    type: "color", value: "#ef4444", color: "#ef4444" },
+  { cmd: "/blue",    desc: "Blue bubble",   type: "color", value: "#3b82f6", color: "#3b82f6" },
+  { cmd: "/green",   desc: "Green bubble",  type: "color", value: "#22c55e", color: "#22c55e" },
+  { cmd: "/purple",  desc: "Purple bubble", type: "color", value: "#8b5cf6", color: "#8b5cf6" },
+  { cmd: "/orange",  desc: "Orange bubble", type: "color", value: "#f97316", color: "#f97316" },
+  { cmd: "/pink",    desc: "Pink bubble",   type: "color", value: "#ec4899", color: "#ec4899" },
+]
+
+/* ─── Component ──────────────────────────────────────────────── */
 export function MessageInput({
   roomId,
   authorName,
@@ -34,29 +58,25 @@ export function MessageInput({
   const setTyping = useMutation(api.presence.setTyping)
   const [content, setContent] = useState("")
   const [isSending, setIsSending] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState(false)
+  const [cmdIndex, setCmdIndex] = useState(0)
+  const [activeCommand, setActiveCommand] = useState<SlashCommand | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const pickerRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Use ref to avoid stale closure in setTypingStatus
   const isTypingRef = useRef(false)
   const { trigger: haptic } = useWebHaptics()
 
   const trimmed = content.trim()
   const canSend = trimmed.length > 0 && trimmed.length <= MAX_CHARS && !disabled && !isSending
-  const overLimit = content.length > MAX_CHARS
+  const overLimit = trimmed.length > MAX_CHARS
 
-  /* close picker on outside click */
-  useEffect(() => {
-    if (!pickerOpen) return
-    function onDown(e: MouseEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setPickerOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", onDown)
-    return () => document.removeEventListener("mousedown", onDown)
-  }, [pickerOpen])
+  // Show dropdown when entire input is a partial /command with no space yet
+  const cmdQuery = /^\/([\w]*)$/.test(content) ? content.toLowerCase() : null
+  const filteredCmds = cmdQuery !== null
+    ? SLASH_COMMANDS.filter(c => c.cmd.startsWith(cmdQuery))
+    : []
+  const showCmdMenu = filteredCmds.length > 0
+
+  useEffect(() => { setCmdIndex(0) }, [cmdQuery])
 
   /* cleanup typing on unmount */
   useEffect(() => {
@@ -92,31 +112,33 @@ export function MessageInput({
     typingTimeoutRef.current = setTimeout(stopTyping, 1500)
   }
 
-  function insertEmoji(emoji: string) {
-    const el = textareaRef.current
-    if (!el) {
-      setContent((p) => p + emoji)
-      return
-    }
-    const start = el.selectionStart ?? content.length
-    const end = el.selectionEnd ?? content.length
-    const next = content.slice(0, start) + emoji + content.slice(end)
-    setContent(next)
+  // Selecting a command makes it the persistent active mode
+  function selectCommand(cmd: SlashCommand) {
+    setActiveCommand(cmd)
+    setContent("")
     haptic("light")
     requestAnimationFrame(() => {
-      el.focus()
-      const pos = start + emoji.length
-      el.setSelectionRange(pos, pos)
-      autoResize()
+      const el = textareaRef.current
+      if (el) { el.focus(); autoResize() }
     })
+  }
+
+  function clearCommand() {
+    setActiveCommand(null)
+    haptic("light")
+    textareaRef.current?.focus()
   }
 
   async function handleSend() {
     if (!canSend) return
-    const textToSend = content.trim()
+    const textToSend = trimmed
     if (!textToSend) return
 
-    // Clear + stop typing immediately before the async call
+    // Derive styling from the sticky active command
+    const bubbleColor = activeCommand?.type === "color" ? activeCommand.value : undefined
+    const variant = activeCommand?.type === "variant" ? activeCommand.value as Variant : undefined
+    const finalContent = variant === "shout" ? textToSend.toUpperCase() : textToSend
+
     setContent("")
     if (textareaRef.current) textareaRef.current.style.height = "auto"
     stopTyping()
@@ -127,12 +149,14 @@ export function MessageInput({
     try {
       await sendMessage({
         roomId,
-        content: textToSend,
+        content: finalContent,
         authorName,
         authorId,
         replyToId: replyTarget?.id,
         replyToContent: replyTarget?.content,
         replyToAuthor: replyTarget?.authorName,
+        bubbleColor,
+        variant,
       })
     } finally {
       setIsSending(false)
@@ -141,17 +165,36 @@ export function MessageInput({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-      return
+    if (showCmdMenu) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setCmdIndex(i => Math.min(i + 1, filteredCmds.length - 1)); return }
+      if (e.key === "ArrowUp")   { e.preventDefault(); setCmdIndex(i => Math.max(i - 1, 0)); return }
+      if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); selectCommand(filteredCmds[cmdIndex]); return }
+      if (e.key === "Escape") { e.preventDefault(); setContent(""); return }
     }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); return }
     startTyping()
     scheduleStopTyping()
   }
 
   return (
     <div className="relative border-t bg-background">
+      {/* ── Active command badge ── */}
+      {activeCommand && (
+        <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2">
+          <span className="font-mono text-xs font-semibold">Active bubble style:</span>
+          <span className="font-mono text-xs font-medium">{activeCommand.cmd}</span>
+          <span className="font-subtext text-xs text-muted-foreground">{activeCommand.desc}</span>
+          <button
+            type="button"
+            onClick={clearCommand}
+            className="ml-auto shrink-0 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+            aria-label="Clear command"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ── Reply preview bar ── */}
       {replyTarget && (
         <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2">
@@ -172,25 +215,29 @@ export function MessageInput({
       )}
 
       <div className="p-3">
-        {/* ── Emoji picker popover ── */}
-        {pickerOpen && (
-          <div ref={pickerRef} className="absolute right-3 bottom-full z-50 mb-2">
-            <EmojiPicker.Root
-              className="emoji-picker w-75 overflow-hidden rounded-xl border bg-card shadow-xl"
-              onEmojiSelect={(e) => {
-                insertEmoji(e.emoji)
-                setPickerOpen(false)
-              }}
-            >
-              <EmojiPicker.Search />
-              <EmojiPicker.Viewport className="h-52">
-                <EmojiPicker.List />
-              </EmojiPicker.Viewport>
-              <EmojiPicker.Loading>Loading emojis…</EmojiPicker.Loading>
-              <EmojiPicker.Empty>
-                {({ search }) => <>No results for &ldquo;{search}&rdquo;</>}
-              </EmojiPicker.Empty>
-            </EmojiPicker.Root>
+        {/* ── Slash command dropdown ── */}
+        {showCmdMenu && (
+          <div className="absolute bottom-full left-3 right-3 z-50 mb-2 overflow-hidden rounded-xl border bg-card shadow-xl">
+            <p className="px-3 pt-2.5 pb-1 font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              Commands
+            </p>
+            {filteredCmds.map((cmd, i) => (
+              <button
+                key={cmd.cmd}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); selectCommand(cmd) }}
+                className={cn(
+                  "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
+                  i === cmdIndex ? "bg-muted" : "hover:bg-muted/60"
+                )}
+              >
+                <span className="font-mono text-sm font-medium">{cmd.cmd}</span>
+                <span className="font-subtext text-xs text-muted-foreground">{cmd.desc}</span>
+              </button>
+            ))}
+            <p className="px-3 pb-2 pt-1 font-subtext text-[10px] text-muted-foreground">
+              ↑↓ navigate · ↵ or Tab to select · Esc to close
+            </p>
           </div>
         )}
 
@@ -200,36 +247,17 @@ export function MessageInput({
             ref={textareaRef}
             rows={1}
             value={content}
-            onChange={(e) => {
-              setContent(e.target.value)
-              autoResize()
-            }}
+            onChange={(e) => { setContent(e.target.value); autoResize() }}
             onKeyDown={handleKeyDown}
             disabled={disabled || isSending}
-            placeholder={disabled ? "Room has expired" : "Message…"}
+            placeholder={disabled ? "Room has expired" : activeCommand ? `${activeCommand.cmd} mode — type your message` : "Message… or / for commands"}
             className="max-h-40 min-h-6 flex-1 resize-none bg-transparent font-subtext text-base leading-snug outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed md:text-sm"
           />
 
           <div className="flex items-center gap-2 pb-0.5">
-            <button
-              type="button"
-              onClick={() => { haptic("light"); setPickerOpen((v) => !v) }}
-              disabled={disabled}
-              className={cn(
-                "shrink-0 p-0.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none",
-                pickerOpen && "text-foreground"
-              )}
-              aria-label="Emoji picker"
-            >
-              <Smile className="h-4.5 w-4.5" />
-            </button>
-
-            {content.length > MAX_CHARS - 80 && (
-              <span className={cn(
-                "font-subtext text-xs tabular-nums",
-                overLimit ? "text-destructive" : "text-muted-foreground"
-              )}>
-                {content.length}/{MAX_CHARS}
+            {trimmed.length > MAX_CHARS - 80 && (
+              <span className={cn("font-subtext text-xs tabular-nums", overLimit ? "text-destructive" : "text-muted-foreground")}>
+                {trimmed.length}/{MAX_CHARS}
               </span>
             )}
 

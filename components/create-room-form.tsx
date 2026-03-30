@@ -22,12 +22,12 @@ export function CreateRoomForm() {
     e.preventDefault();
     setIsCreating(true);
     try {
-      const roomId = await createRoom({
+      const slug = await createRoom({
         name: roomName.trim() || undefined,
         timerMinutes,
         maxPeople,
       });
-      router.push(`/room/${roomId}`);
+      router.push(`/room/${slug}`);
     } finally {
       setIsCreating(false);
     }

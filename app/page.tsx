@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Timer, Users, EyeOff, UserX, Zap, Lock, Coffee, Megaphone } from "lucide-react";
+import { Timer, Users, EyeOff, UserX, Zap, Lock, Coffee, Megaphone, Reply, Smile, Sparkles, Link2 } from "lucide-react";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
 import {
   Accordion,
@@ -19,9 +19,9 @@ const DispoIcon = ({ size = 18 }: { size?: number }) => (
 
 /* ─── Chat preview ─────────────────────────────────────────────── */
 const avatars = [
-  { initials: "AK", bg: "bg-amber-100 text-amber-800" },
-  { initials: "JR", bg: "bg-orange-100 text-orange-800" },
-  { initials: "MS", bg: "bg-rose-100 text-rose-800" },
+  { initials: "AK", bg: "#FF6900" },
+  { initials: "JR", bg: "#2B7FFF" },
+  { initials: "MS", bg: "#00C950" },
 ];
 
 function ChatPreview() {
@@ -58,7 +58,11 @@ function ChatPreview() {
       <div className="flex items-center justify-between border-t px-4 py-2.5">
         <div className="flex -space-x-2">
           {avatars.map(({ initials, bg }) => (
-            <div key={initials} className={`size-6 rounded-full border-2 border-card flex items-center justify-center text-[9px] font-semibold ${bg}`}>
+            <div
+              key={initials}
+              className="size-6 rounded-full border-2 border-card flex items-center justify-center text-[9px] font-semibold text-white"
+              style={{ backgroundColor: bg }}
+            >
               {initials}
             </div>
           ))}
@@ -130,10 +134,14 @@ export default function LandingPage() {
           <div className="mx-auto max-w-3xl px-6 py-14 md:py-16">
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {[
-                { Icon: Timer,  label: "5–30 min timers", sub: "You set the countdown", color: "#2B7FFF" },
-                { Icon: Users,  label: "Up to 6 people",  sub: "Small, focused rooms",  color: "#00C950" },
-                { Icon: EyeOff, label: "Zero traces",      sub: "No logs or history",    color: "#FF6900" },
-                { Icon: UserX,  label: "No account",       sub: "Link is all you need",  color: "#8038BF" },
+                { Icon: Timer,    label: "5–30 min timers",     sub: "You set the countdown",      color: "#2B7FFF" },
+                { Icon: Users,    label: "Up to 6 people",      sub: "Small, focused rooms",       color: "#00C950" },
+                { Icon: EyeOff,   label: "Zero traces",         sub: "No logs or history",         color: "#FF6900" },
+                { Icon: UserX,    label: "No account",          sub: "Link is all you need",       color: "#8038BF" },
+                { Icon: Reply,    label: "Swipe to reply",      sub: "Thread replies inline",      color: "#FF3B6B" },
+                { Icon: Smile,    label: "Emoji picker",        sub: "Express yourself fully",     color: "#FFBA00" },
+                { Icon: Sparkles, label: "Chat animations",     sub: "React with lols & hearts",   color: "#00B8D9" },
+                { Icon: Link2,    label: "Memorable links",     sub: "Funny names, not gibberish", color: "#7C5CFC" },
               ].map(({ Icon, label, sub, color }) => (
                 <div key={label} className="flex flex-col gap-1.5 rounded-xl border p-4 bg-background">
                   <Icon className="size-4" style={{ color }} strokeWidth={1.5} />
@@ -257,7 +265,7 @@ export default function LandingPage() {
                 { q: "Can I extend the timer once it's live?",  a: "No. The timer you set is the timer you get. This is very much on purpose — it keeps conversations focused and removes the temptation to keep pushing the deadline." },
                 { q: "Do I need an account?",                   a: "No account, no sign-up, no email, no password to forget. You create a room, you get a link, you share it. That's the entire onboarding." },
                 { q: "How many people can join a room?",        a: "You set the limit when you create it — anywhere from 3 to 6 people. Once the room is full, the link stops working for anyone else." },
-                { q: "Can someone join without the link?",      a: "Not unless they have the link. Room IDs aren't guessable and there's no public directory of open rooms. Share the link only with who you mean to." },
+                { q: "Can someone join without the link?",      a: "Not unless they have the link. Room links are human-readable but random — something like soggy-platypus-k2m. Memorable enough to share, impossible to guess. No public directory of open rooms either." },
                 { q: "Can I rejoin a room after it expires?",   a: "No. Once a room closes it's gone for good. If you need to keep talking, create a new room. That's kind of the whole point." },
                 { q: "Is dispochat free?",                      a: "Yes, completely free. No trial period, no credit card, no freemium bait-and-switch. Create rooms, use all the features, pay nothing." },
               ].map(({ q, a }) => (
@@ -273,12 +281,6 @@ export default function LandingPage() {
                 </AccordionItem>
               ))}
             </Accordion>
-            <p className="font-subtext mt-6 text-xs text-muted-foreground text-center md:text-left">
-              More questions?{" "}
-              <Link href="/faq" className="underline underline-offset-2 hover:text-foreground transition-colors">
-                Read the full FAQ →
-              </Link>
-            </p>
           </div>
         </section>
 

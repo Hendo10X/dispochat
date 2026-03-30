@@ -66,6 +66,8 @@ interface BubbleProps {
     _creationTime: number;
     replyToContent?: string;
     replyToAuthor?: string;
+    bubbleColor?: string;
+    variant?: "shout" | "whisper" | "bold";
   };
   isOwn: boolean;
   showName: boolean;
@@ -146,12 +148,23 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
           )}
 
           <div
-            style={{ overflowWrap: "anywhere" }}
+            style={{
+              overflowWrap: "anywhere",
+              ...(msg.bubbleColor
+                ? { backgroundColor: msg.bubbleColor, color: "#fff" }
+                : {}),
+              ...(msg.variant === "whisper" ? { opacity: 0.65 } : {}),
+            }}
             className={cn(
               "rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
-              isOwn
+              isOwn && !msg.bubbleColor
                 ? "rounded-br-sm bg-primary text-primary-foreground"
-                : "rounded-bl-sm bg-muted text-foreground"
+                : !msg.bubbleColor
+                  ? "rounded-bl-sm bg-muted text-foreground"
+                  : isOwn ? "rounded-br-sm" : "rounded-bl-sm",
+              msg.variant === "shout" && "font-bold tracking-wide",
+              msg.variant === "whisper" && "italic",
+              msg.variant === "bold" && "font-bold",
             )}
           >
             {msg.content}

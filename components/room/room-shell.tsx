@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import { Id } from "@/convex/_generated/dataModel"
 import { useUserId } from "@/hooks/use-user-id"
 import { useRoomExpiry } from "@/hooks/use-room-expiry"
 import { JoinDialog } from "./join-dialog"
@@ -17,7 +16,7 @@ import { Kbd } from "@/components/ui/kbd"
 import { Copy, TimerOff, Users } from "lucide-react"
 
 interface RoomShellProps {
-  roomId: Id<"rooms">
+  slug: string
 }
 
 const STALE_THRESHOLD = 15_000
@@ -41,11 +40,12 @@ function typingColorForUserId(userId: string): string {
   return TYPING_COLORS[hash % TYPING_COLORS.length]
 }
 
-export function RoomShell({ roomId }: RoomShellProps) {
+export function RoomShell({ slug }: RoomShellProps) {
   const router = useRouter()
   const userId = useUserId()
-  const room = useQuery(api.rooms.getRoom, { roomId })
-  const presenceRecords = useQuery(api.presence.getPresence, { roomId })
+  const room = useQuery(api.rooms.getRoomBySlug, { slug })
+  const roomId = room?._id
+  const presenceRecords = useQuery(api.presence.getPresence, roomId ? { roomId } : "skip")
   const upsertPresence = useMutation(api.presence.upsertPresence)
   const removePresence = useMutation(api.presence.removePresence)
 
@@ -58,13 +58,13 @@ export function RoomShell({ roomId }: RoomShellProps) {
 
   // Restore name from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(`dispochat_name_${roomId}`)
+    const saved = localStorage.getItem(`dispochat_name_${slug}`)
     if (saved) setDisplayName(saved)
-  }, [roomId])
+  }, [slug])
 
   // Heartbeat
   useEffect(() => {
-    if (!displayName || !userId || isExpired) return
+    if (!displayName || !userId || isExpired || !roomId) return
 
     upsertPresence({ roomId, userId, displayName })
 
@@ -79,7 +79,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
 
   // Cleanup on unmount / tab close
   useEffect(() => {
-    if (!userId) return
+    if (!userId || !roomId) return
     const handleUnload = () => {
       removePresence({ roomId, userId })
     }
@@ -91,7 +91,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
   }, [userId, roomId, removePresence])
 
   function handleJoin(name: string) {
-    localStorage.setItem(`dispochat_name_${roomId}`, name)
+    localStorage.setItem(`dispochat_name_${slug}`, name)
     setDisplayName(name)
   }
 
@@ -102,7 +102,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
   }
 
   // Loading
-  if (room === undefined || !userId) {
+  if (room === undefined || !userId || (room !== null && !roomId)) {
     return (
       <div className="flex min-h-svh items-center justify-center">
         <div className="font-subtext text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
         <div className="flex flex-1 overflow-hidden">
           {/* Chat */}
           <div className="flex flex-1 flex-col overflow-hidden">
-            {displayName && userId ? (
+            {displayName && userId && roomId ? (
               <>
                 <ChatMessages
                   roomId={roomId}
@@ -244,7 +244,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
 
           {/* Sidebar */}
           <aside className="hidden w-56 shrink-0 border-l p-4 md:block">
-            {presenceRecords && userId && (
+            {presenceRecords && userId && roomId && (
               <ParticipantList
                 presenceRecords={presenceRecords}
                 currentUserId={userId}

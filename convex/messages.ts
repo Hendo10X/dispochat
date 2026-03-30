@@ -10,6 +10,8 @@ export const sendMessage = mutation({
     replyToId: v.optional(v.id("messages")),
     replyToContent: v.optional(v.string()),
     replyToAuthor: v.optional(v.string()),
+    bubbleColor: v.optional(v.string()),
+    variant: v.optional(v.union(v.literal("shout"), v.literal("whisper"), v.literal("bold"))),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
@@ -28,6 +30,8 @@ export const sendMessage = mutation({
       replyToId: args.replyToId,
       replyToContent: args.replyToContent,
       replyToAuthor: args.replyToAuthor,
+      bubbleColor: args.bubbleColor,
+      variant: args.variant,
     });
   },
 });
