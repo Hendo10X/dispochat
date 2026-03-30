@@ -5,6 +5,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { ChatAnimationOverlay } from "./chat-animation-overlay";
+import { useMessageAnimation } from "@/hooks/use-message-animation";
 
 interface ChatMessagesProps {
   roomId: Id<"rooms">;
@@ -22,6 +24,7 @@ export function ChatMessages({ roomId, currentUserId }: ChatMessagesProps) {
   const messages = useQuery(api.messages.getMessages, { roomId });
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { animationType, animationKey, clearAnimation } = useMessageAnimation(messages);
 
   useEffect(() => {
     if (!messages?.length) return;
@@ -60,6 +63,12 @@ export function ChatMessages({ roomId, currentUserId }: ChatMessagesProps) {
   }
 
   return (
+    <>
+      <ChatAnimationOverlay
+        key={animationKey}
+        type={animationType}
+        onComplete={clearAnimation}
+      />
     <div
       ref={containerRef}
       className="flex flex-1 flex-col gap-1 overflow-y-auto p-4"
@@ -97,5 +106,6 @@ export function ChatMessages({ roomId, currentUserId }: ChatMessagesProps) {
       })}
       <div ref={bottomRef} />
     </div>
+    </>
   );
 }

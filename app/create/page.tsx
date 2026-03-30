@@ -16,7 +16,7 @@ export default function CreatePage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-xl font-semibold tracking-tight hover:opacity-80 transition-opacity">
             <DispoIcon />
-            dispochat
+            <span className="uppercase tracking-wider">dispochat</span>
           </Link>
           <p className="font-subtext mt-3 text-sm text-muted-foreground">
             Configure your room below.

@@ -1,93 +1,96 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { useUserId } from "@/hooks/use-user-id";
-import { useRoomExpiry } from "@/hooks/use-room-expiry";
-import { JoinDialog } from "./join-dialog";
-import { RoomTimer } from "./room-timer";
-import { ChatMessages } from "./chat-messages";
-import { MessageInput } from "./message-input";
-import { ParticipantList } from "./participant-list";
-import { Button } from "@/components/ui/button";
-import { Copy, TimerOff, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useMutation, useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
+import { useUserId } from "@/hooks/use-user-id"
+import { useRoomExpiry } from "@/hooks/use-room-expiry"
+import { JoinDialog } from "./join-dialog"
+import { RoomTimer } from "./room-timer"
+import { ChatMessages } from "./chat-messages"
+import { MessageInput } from "./message-input"
+import { ParticipantList } from "./participant-list"
+import { Button } from "@/components/ui/button"
+import { Kbd } from "@/components/ui/kbd"
+import { Copy, TimerOff, Users } from "lucide-react"
 
 interface RoomShellProps {
-  roomId: Id<"rooms">;
+  roomId: Id<"rooms">
 }
 
-const STALE_THRESHOLD = 15_000;
-const HEARTBEAT_INTERVAL = 10_000;
+const STALE_THRESHOLD = 15_000
+const HEARTBEAT_INTERVAL = 10_000
 
 export function RoomShell({ roomId }: RoomShellProps) {
-  const router = useRouter();
-  const userId = useUserId();
-  const room = useQuery(api.rooms.getRoom, { roomId });
-  const presenceRecords = useQuery(api.presence.getPresence, { roomId });
-  const upsertPresence = useMutation(api.presence.upsertPresence);
-  const removePresence = useMutation(api.presence.removePresence);
+  const router = useRouter()
+  const userId = useUserId()
+  const room = useQuery(api.rooms.getRoom, { roomId })
+  const presenceRecords = useQuery(api.presence.getPresence, { roomId })
+  const upsertPresence = useMutation(api.presence.upsertPresence)
+  const removePresence = useMutation(api.presence.removePresence)
 
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const { isExpired } = useRoomExpiry(room?.expiresAt);
+  const { isExpired } = useRoomExpiry(room?.expiresAt)
 
   // Restore name from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(`dispochat_name_${roomId}`);
-    if (saved) setDisplayName(saved);
-  }, [roomId]);
+    const saved = localStorage.getItem(`dispochat_name_${roomId}`)
+    if (saved) setDisplayName(saved)
+  }, [roomId])
 
   // Heartbeat
   useEffect(() => {
-    if (!displayName || !userId || isExpired) return;
+    if (!displayName || !userId || isExpired) return
 
-    upsertPresence({ roomId, userId, displayName });
+    upsertPresence({ roomId, userId, displayName })
 
     heartbeatRef.current = setInterval(() => {
-      upsertPresence({ roomId, userId, displayName });
-    }, HEARTBEAT_INTERVAL);
+      upsertPresence({ roomId, userId, displayName })
+    }, HEARTBEAT_INTERVAL)
 
     return () => {
-      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-    };
-  }, [displayName, userId, roomId, isExpired, upsertPresence]);
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current)
+    }
+  }, [displayName, userId, roomId, isExpired, upsertPresence])
 
   // Cleanup on unmount / tab close
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return
     const handleUnload = () => {
-      removePresence({ roomId, userId });
-    };
-    window.addEventListener("beforeunload", handleUnload);
+      removePresence({ roomId, userId })
+    }
+    window.addEventListener("beforeunload", handleUnload)
     return () => {
-      window.removeEventListener("beforeunload", handleUnload);
-      removePresence({ roomId, userId });
-    };
-  }, [userId, roomId, removePresence]);
+      window.removeEventListener("beforeunload", handleUnload)
+      removePresence({ roomId, userId })
+    }
+  }, [userId, roomId, removePresence])
 
   function handleJoin(name: string) {
-    localStorage.setItem(`dispochat_name_${roomId}`, name);
-    setDisplayName(name);
+    localStorage.setItem(`dispochat_name_${roomId}`, name)
+    setDisplayName(name)
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    await navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   // Loading
   if (room === undefined || !userId) {
     return (
       <div className="flex min-h-svh items-center justify-center">
-        <div className="font-subtext text-sm text-muted-foreground">Loading…</div>
+        <div className="font-subtext text-sm text-muted-foreground">
+          Loading…
+        </div>
       </div>
-    );
+    )
   }
 
   // Not found
@@ -103,7 +106,7 @@ export function RoomShell({ roomId }: RoomShellProps) {
           Create a room
         </Button>
       </div>
-    );
+    )
   }
 
   // Expired
@@ -119,16 +122,18 @@ export function RoomShell({ roomId }: RoomShellProps) {
           Create a new room
         </Button>
       </div>
-    );
+    )
   }
 
   // Room full check
   const activeParticipants = (presenceRecords ?? []).filter(
     (p) => p.lastSeen > Date.now() - STALE_THRESHOLD
-  );
-  const isUserPresent = activeParticipants.some((p) => p.userId === userId);
+  )
+  const isUserPresent = activeParticipants.some((p) => p.userId === userId)
   const isFull =
-    activeParticipants.length >= room.maxPeople && !isUserPresent && !displayName;
+    activeParticipants.length >= room.maxPeople &&
+    !isUserPresent &&
+    !displayName
 
   if (isFull) {
     return (
@@ -142,24 +147,24 @@ export function RoomShell({ roomId }: RoomShellProps) {
           Create your own room
         </Button>
       </div>
-    );
+    )
   }
 
   return (
     <>
-      {!displayName && (
-        <JoinDialog roomName={room.name} onJoin={handleJoin} />
-      )}
-      <div className="flex h-svh flex-col">
+      {!displayName && <JoinDialog roomName={room.name} onJoin={handleJoin} />}
+      <div className="flex h-dvh flex-col">
         {/* Header */}
         <header className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-3">
             <div>
-              <h1 className="text-sm font-semibold leading-none">
-                {room.name ?? "dispochat"}
+              <h1 className="text-sm leading-none font-semibold">
+                {room.name ?? (
+                  <span className="tracking-wider uppercase">dispochat</span>
+                )}
               </h1>
               {room.name && (
-                <p className="font-subtext mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 font-subtext text-xs tracking-wider text-muted-foreground uppercase">
                   dispochat
                 </p>
               )}
@@ -178,6 +183,12 @@ export function RoomShell({ roomId }: RoomShellProps) {
             </Button>
           </div>
         </header>
+
+        <div className="hidden px-4 py-2 text-xs text-muted-foreground md:block">
+          <p>
+            Press <Kbd>d</Kbd> to toggle between dark and light mode.
+          </p>
+        </div>
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden">
@@ -215,5 +226,5 @@ export function RoomShell({ roomId }: RoomShellProps) {
         </div>
       </div>
     </>
-  );
+  )
 }

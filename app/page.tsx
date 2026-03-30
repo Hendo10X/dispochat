@@ -87,10 +87,8 @@ export default function LandingPage() {
               <h1 className="text-4xl font-bold tracking-tight leading-[1.12] md:text-5xl">
                 Conversations<br />that disappear.
               </h1>
-              <p className="font-subtext text-base text-muted-foreground leading-relaxed max-w-md">
-                Create a room, set a timer, share the link.<br />
-                When time&apos;s up — the room locks, messages vanish,<br />
-                and it never existed.
+              <p className="font-subtext text-base text-muted-foreground leading-relaxed max-w-xs md:max-w-sm">
+                Create a room, set a timer, share the link. When time&apos;s up — messages vanish and it never existed.
               </p>
               <Link href="/create" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-85">
                 Create a room
