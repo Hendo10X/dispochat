@@ -1,12 +1,18 @@
-import { DM_Sans, Inter } from "next/font/google";
+import { DM_Sans, Karla, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const karla = Karla({ subsets: ["latin"], variable: "--font-sans" });
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-subtext" });
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500", "600"],
+});
 
 export default function RootLayout({
   children,
@@ -17,7 +23,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased font-sans", inter.variable, dmSans.variable)}
+      className={cn("antialiased font-sans", karla.variable, dmSans.variable, ibmPlexMono.variable)}
     >
       <body>
         <ConvexClientProvider>
