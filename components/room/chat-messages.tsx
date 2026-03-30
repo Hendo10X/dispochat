@@ -8,11 +8,22 @@ import { cn } from "@/lib/utils";
 import { ChatAnimationOverlay } from "./chat-animation-overlay";
 import { useMessageAnimation } from "@/hooks/use-message-animation";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Reply } from "lucide-react";
+import { Reply, CornerUpLeft } from "lucide-react";
 import { useWebHaptics } from "web-haptics/react";
 
 /* ─── Brand colors for usernames ────────────────────────────── */
-const NAME_COLORS = ["#2B7FFF", "#FF6900", "#00C950", "#8038BF"];
+const NAME_COLORS = [
+  "#2B7FFF", // blue
+  "#FF6900", // orange
+  "#00C950", // green
+  "#8038BF", // purple
+  "#FF3B6B", // rose
+  "#00B8D9", // cyan
+  "#FFBA00", // amber
+  "#E8365D", // crimson
+  "#00A878", // teal
+  "#7C5CFC", // violet
+];
 function colorForId(id: string): string {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
@@ -93,6 +104,26 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
         </span>
       )}
 
+      {/* Reply thread indicator — sits above the bubble */}
+      {msg.replyToContent && (
+        <div className={cn("flex flex-col mb-0.5", isOwn ? "items-end" : "items-start")}>
+          <div
+            className={cn(
+              "w-px h-4",
+              isOwn ? "mr-3" : "ml-3"
+            )}
+            style={{ background: "#00C950", opacity: 0.45 }}
+          />
+          <span
+            className="flex items-center gap-1 text-[11px] font-medium font-subtext px-1"
+            style={{ color: "#00C950" }}
+          >
+            <CornerUpLeft className="h-3 w-3 shrink-0" />
+            replied to <span className="font-semibold">{msg.replyToAuthor}</span>
+          </span>
+        </div>
+      )}
+
       {/* Bubble + absolutely-positioned reply button so it never affects bubble width */}
       <div className="relative max-w-[75%]">
         {/* Swipe-to-reply drag layer */}
@@ -124,20 +155,6 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
                 : "rounded-bl-sm bg-muted text-foreground"
             )}
           >
-            {/* Reply quote — darker tint */}
-            {msg.replyToContent && (
-              <div
-                className={cn(
-                  "mb-2 rounded-lg border-l-2 pl-2.5 pr-2 py-1.5 text-xs leading-snug",
-                  isOwn
-                    ? "border-white/40 bg-black/25 text-primary-foreground/75"
-                    : "border-primary/40 bg-primary/10 text-foreground/70"
-                )}
-              >
-                <p className="mb-0.5 font-semibold">{msg.replyToAuthor}</p>
-                <p className="line-clamp-2">{msg.replyToContent}</p>
-              </div>
-            )}
             {msg.content}
           </div>
         </motion.div>
