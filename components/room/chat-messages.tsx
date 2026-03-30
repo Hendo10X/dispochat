@@ -8,9 +8,15 @@ import { cn } from "@/lib/utils";
 import { ChatAnimationOverlay } from "./chat-animation-overlay";
 import { useMessageAnimation } from "@/hooks/use-message-animation";
 
+interface TypingUser {
+  userId: string;
+  displayName: string;
+}
+
 interface ChatMessagesProps {
   roomId: Id<"rooms">;
   currentUserId: string;
+  typingUsers?: TypingUser[];
 }
 
 function formatTime(timestamp: number): string {
@@ -20,21 +26,20 @@ function formatTime(timestamp: number): string {
   });
 }
 
-export function ChatMessages({ roomId, currentUserId }: ChatMessagesProps) {
+export function ChatMessages({ roomId, currentUserId, typingUsers = [] }: ChatMessagesProps) {
   const messages = useQuery(api.messages.getMessages, { roomId });
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { animationType, animationKey, clearAnimation } = useMessageAnimation(messages);
 
   useEffect(() => {
-    if (!messages?.length) return;
     const el = containerRef.current;
     if (!el) return;
     const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
     if (isNearBottom) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages?.length]);
+  }, [messages?.length, typingUsers.length]);
 
   if (messages === undefined) {
     return (
@@ -90,7 +95,7 @@ export function ChatMessages({ roomId, currentUserId }: ChatMessagesProps) {
             )}
             <div
               className={cn(
-                "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",
+                "max-w-[75%] min-w-0 break-words rounded-2xl px-3.5 py-2 text-sm",
                 isOwn
                   ? "rounded-br-sm bg-primary text-primary-foreground"
                   : "rounded-bl-sm bg-muted text-foreground"
@@ -104,6 +109,20 @@ export function ChatMessages({ roomId, currentUserId }: ChatMessagesProps) {
           </div>
         );
       })}
+      {typingUsers.length > 0 && (
+        <div className="flex flex-col items-start gap-0.5 mt-1">
+          <span className="font-subtext mb-0.5 ml-1 text-xs text-muted-foreground">
+            {typingUsers.map((u) => u.displayName).join(", ")}
+          </span>
+          <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
+            <span className="flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
+              <span className="size-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
+              <span className="size-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
+            </span>
+          </div>
+        </div>
+      )}
       <div ref={bottomRef} />
     </div>
     </>

@@ -211,40 +211,13 @@ export function RoomShell({ roomId }: RoomShellProps) {
           </p>
         </div>
 
-        {typingUsers.length > 0 && (
-          <div className="px-4 pb-2 text-sm">
-            {typingUsers.length === 1 ? (
-              <span
-                className={`inline-flex animate-pulse items-center gap-2 ${typingColorForUserId(
-                  typingUsers[0].userId
-                )}`}
-              >
-                {typingUsers[0].displayName} is typing...
-              </span>
-            ) : (
-              <span className="inline-flex animate-pulse items-center gap-2">
-                {typingUsers.map((u, index) => (
-                  <span
-                    key={u.userId}
-                    className={`${typingColorForUserId(u.userId)} font-semibold`}
-                  >
-                    {u.displayName}
-                    {index < typingUsers.length - 1 ? ", " : ""}
-                  </span>
-                ))}
-                are typing...
-              </span>
-            )}
-          </div>
-        )}
-
         {/* Body */}
         <div className="flex flex-1 overflow-hidden">
           {/* Chat */}
           <div className="flex flex-1 flex-col overflow-hidden">
             {displayName && userId ? (
               <>
-                <ChatMessages roomId={roomId} currentUserId={userId} />
+                <ChatMessages roomId={roomId} currentUserId={userId} typingUsers={typingUsers} />
                 <MessageInput
                   roomId={roomId}
                   authorName={displayName}
