@@ -45,7 +45,7 @@ function ChatPreview() {
       <div className="h-0.5 bg-muted overflow-hidden">
         <div className="timer-bar h-full bg-primary" />
       </div>
-      <div className="flex flex-col gap-2.5 p-5 min-h-[200px] justify-end">
+      <div className="flex flex-col gap-2.5 p-5 min-h-50 justify-end">
         {messages.map((m) => (
           <div key={m.id} className={`flex ${m.self ? "justify-end" : "justify-start"}`}>
             <span className={`max-w-[70%] rounded-2xl px-3.5 py-2 text-sm leading-snug ${m.self ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
@@ -54,7 +54,7 @@ function ChatPreview() {
           </div>
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-card to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-card to-transparent" />
       <div className="flex items-center justify-between border-t px-4 py-2.5">
         <div className="flex -space-x-2">
           {avatars.map(({ initials, bg }) => (
@@ -252,7 +252,7 @@ export default function LandingPage() {
             <h2 className="text-2xl font-bold tracking-tight mb-10 text-center md:text-left">
               Things people ask.
             </h2>
-            <Accordion openMultiple>
+            <Accordion multiple>
               {[
                 { q: "Do you store my messages?",               a: "No. Messages live only for the duration of the room. Once the timer expires and the room closes, everything is permanently deleted — no archive, no backup, no secret copy we forgot to mention." },
                 { q: "What happens when the timer hits zero?",  a: "The room locks immediately. No new messages can be sent. The conversation is then deleted. It's over. Clean slate." },
