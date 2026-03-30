@@ -6,7 +6,14 @@
       "Bash(npx tsc:*)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''version''''\\), d.get\\(''''exports'''', {}\\).keys\\(\\)\\)\")",
       "Bash(node -e \"const p=require\\(''./node_modules/frimousse/package.json''\\); console.log\\(p.version\\)\")",
-      "Bash(node -e \"const p=require\\(''./node_modules/framer-motion/package.json''\\); console.log\\(p.version\\)\")"
+      "Bash(node -e \"const p=require\\(''./node_modules/framer-motion/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(npm search:*)",
+      "Bash(curl -s https://haptics.lochie.me/)",
+      "WebFetch(domain:haptics.lochie.me)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm info:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm install:*)"
     ]
   }
 }

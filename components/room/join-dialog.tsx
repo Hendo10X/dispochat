@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useWebHaptics } from "web-haptics/react";
 
 interface JoinDialogProps {
   roomName?: string;
@@ -13,18 +14,22 @@ interface JoinDialogProps {
 export function JoinDialog({ roomName, onJoin }: JoinDialogProps) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const { trigger: haptic } = useWebHaptics();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
+      haptic("warning");
       setError("Please enter a name");
       return;
     }
     if (trimmed.length > 30) {
+      haptic("warning");
       setError("Name must be 30 characters or less");
       return;
     }
+    haptic("medium");
     onJoin(trimmed);
   }
 

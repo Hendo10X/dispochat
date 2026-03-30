@@ -9,6 +9,15 @@ import { ChatAnimationOverlay } from "./chat-animation-overlay";
 import { useMessageAnimation } from "@/hooks/use-message-animation";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Reply } from "lucide-react";
+import { useWebHaptics } from "web-haptics/react";
+
+/* ─── Brand colors for usernames ────────────────────────────── */
+const NAME_COLORS = ["#2B7FFF", "#FF6900", "#00C950", "#8038BF"];
+function colorForId(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return NAME_COLORS[h % NAME_COLORS.length];
+}
 
 interface TypingUser {
   userId: string;
@@ -56,8 +65,10 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
   const iconOpacity = useTransform(x, [0, 36], [0, 1]);
   const iconX = useTransform(x, [0, 48], [-8, 0]);
   const [hovered, setHovered] = useState(false);
+  const { trigger: haptic } = useWebHaptics();
 
   function triggerReply() {
+    haptic("light");
     onReply({ id: msg._id, content: msg.content, authorName: msg.authorName });
   }
 
@@ -74,7 +85,10 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
       onMouseLeave={() => setHovered(false)}
     >
       {showName && (
-        <span className="font-subtext mb-0.5 ml-1 text-xs text-muted-foreground">
+        <span
+          className="font-subtext mb-0.5 ml-1 text-xs font-medium"
+          style={{ color: colorForId(msg.authorId) }}
+        >
           {msg.authorName}
         </span>
       )}
@@ -113,8 +127,9 @@ function MessageBubble({ msg, isOwn, showName, onReply }: BubbleProps) {
           className="touch-pan-y"
         >
           <div
+            style={{ overflowWrap: "anywhere" }}
             className={cn(
-              "max-w-[75%] min-w-0 wrap-break-word rounded-2xl px-3.5 py-2 text-sm",
+              "max-w-[75%] w-fit rounded-2xl px-3.5 py-2 text-sm",
               isOwn
                 ? "rounded-br-sm bg-primary text-primary-foreground"
                 : "rounded-bl-sm bg-muted text-foreground"
